@@ -1,0 +1,31 @@
+* {
+  padding: 0;
+  margin: 0;
+  box-sizing: border-box;
+}
+
+canvas {
+  /* background: #202020; */
+  border: 20px double rgba(228, 126, 248, 0.8);
+}
+
+.container {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-evenly;
+  align-items: center;
+}
+
+.container h1 {
+  color: transparent;
+  background: linear-gradient(
+    -90deg,
+    rgb(228, 126, 248),
+    rgb(190, 90, 247),
+    rgb(22, 91, 145)
+  );
+  background-clip: text;
+  -webkit-background-clip: text;
+  font-size: 3rem;
+}
