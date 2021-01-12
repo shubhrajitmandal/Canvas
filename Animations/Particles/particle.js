@@ -1,161 +1,108 @@
 window.onload = () => {
   const canvas = document.getElementById("canvas");
   const ctx = canvas.getContext("2d");
+  const color = "#5500ff";
 
   canvas.height = innerHeight;
   canvas.width = innerWidth;
 
-  function generateRandomValue(min, max) {
-    return Math.floor(Math.random() * (max - min)) + min;
-  }
+  window.addEventListener("resize", () => {
+    canvas.height = innerHeight;
+    canvas.width = innerWidth;
+  });
 
-  function generateRandomPoint(x, y, radius) {
-    const dist = generateRandomValue(0.1 * radius, 0.99 * radius);
-    const angle = generateRandomValue(0, 360);
-
-    return [
-      x + dist * Math.cos((angle * Math.PI) / 180),
-      y + dist * Math.sin((angle * Math.PI) / 180),
-    ];
-  }
-
-  function generatePointOnCircle(x, y, radius, num) {
-    const angle = 360 / num;
-    const points = [];
-
-    for (let i = 0; i < num; i++) {
-      const point = [
-        x + radius * Math.cos((i * angle * Math.PI) / 180),
-        y + radius * Math.sin((i * angle * Math.PI) / 180),
-      ];
-      points.push(point);
-    }
-
-    return points;
-  }
-
-  function Sphere([x, y]) {
+  function Particle(x, y, dx, dy, radius) {
     this.x = x;
     this.y = y;
-    this.dx = generateRandomValue(0, 4) * (-1) ** generateRandomValue(0, 2);
-    this.dy = generateRandomValue(0, 4) * (-1) ** generateRandomValue(0, 2);
-    this.radius = generateRandomValue(4, 8);
+    this.dx = dx;
+    this.dy = dy;
+    this.radius = radius;
 
     this.draw = () => {
       ctx.beginPath();
-      ctx.fillStyle = "#ff5500";
+      ctx.fillStyle = "#fff";
+      ctx.shadowBlur = 16;
+      ctx.shadowColor = color;
       ctx.arc(this.x, this.y, this.radius, 0, 2 * Math.PI);
       ctx.fill();
     };
+
+    this.update = function () {
+      if (this.x > innerWidth - this.radius || this.x < this.radius) {
+        this.dx = -this.dx;
+      }
+
+      if (this.y > innerHeight - this.radius || this.y < this.radius) {
+        this.dy = -this.dy;
+      }
+
+      this.x += this.dx;
+      this.y += this.dy;
+
+      // Events
+      // if (
+      //   mouse.x - this.x < 50 &&
+      //   mouse.x - this.x > -50 &&
+      //   mouse.y - this.y < 50 &&
+      //   mouse.y - this.y > -50
+      // ) {
+      //   if (this.radius < maxRadius) {
+      //     this.radius += 2;
+      //   }
+      // } else if (this.radius > this.minRadius) {
+      //   this.radius -= 2;
+      // }
+
+      this.draw();
+    };
   }
 
-  function Clusters(size, radius) {
-    this.x = generateRandomValue(radius, innerWidth - radius);
-    this.y = generateRandomValue(radius, innerHeight - radius);
-    this.radius = radius;
-    this.inCircle = [];
-    this.onCircle = [];
+  const main = (size, radius) => {
+    const Particles = [];
 
     for (let i = 0; i < size; i++) {
-      const s = new Sphere(generateRandomPoint(this.x, this.y, this.radius));
-      s.draw();
-      this.inCircle.push(s);
+      let radius = Math.floor(Math.random() * 1) + 5,
+        x = Math.random() * (innerWidth - 2 * radius) + radius,
+        y = Math.random() * (innerHeight - 2 * radius) + radius,
+        dx = (Math.random() - 0.5) * 4,
+        dy = (Math.random() - 0.5) * 4;
+
+      Particles.push(new Particle(x, y, dx, dy, radius));
     }
 
-    // for (let i = 0; i < 12; i++) {
-    //   const s = new Sphere(
-    //     generateRandomPoint(this.x, this.y, this.radius, true)
-    //   );
-    //   s.draw();
-    //   this.onCircle.push(s);
-    // }
+    animate(Particles, radius);
+  };
 
-    this.onCircle = generatePointOnCircle(this.x, this.y, this.radius, 12).map(
-      (center) => new Sphere(center)
-    );
+  function animate(Particles, radius) {
+    requestAnimationFrame(() => {
+      animate(Particles, radius);
+    });
 
-    ctx.moveTo(this.x, this.y);
-    ctx.arc(this.x, this.y, this.radius, 0, 2 * Math.PI);
-    ctx.stroke();
-
-    this.drawAll = function () {
-      this.inCircle.map((sphere) => {
-        for (let i = 0; i < this.inCircle.length; i++) {
+    ctx.clearRect(0, 0, innerWidth, innerHeight);
+    Particles.forEach((s) => {
+      let opacity = 1;
+      s.update();
+      for (let i = 0; i < Particles.length; i++) {
+        const distance = Math.sqrt(
+          (Particles[i].x - s.x) ** 2 + (Particles[i].y - s.y) ** 2
+        );
+        opacity = 1 - distance / radius;
+        if (distance < radius) {
           ctx.beginPath();
-          ctx.strokeStyle = "#ff5500";
-          //   ctx.lineWidth = Math.random() * 1.2 + 0.6;
-          ctx.lineWidth = 1;
-          ctx.moveTo(sphere.x, sphere.y);
-          ctx.lineTo(this.inCircle[i].x, this.inCircle[i].y);
+          ctx.strokeStyle = `rgba(85, 0, 255, ${opacity})`;
+          ctx.lineWidth = 1.2;
+          ctx.shadowBlur = 0;
+          // ctx.setLineDash([5, 20]);
+          ctx.moveTo(s.x, s.y);
+          ctx.lineTo(Particles[i].x, Particles[i].y);
           ctx.stroke();
         }
-      });
-    };
-
-    this.drawWithinRadius = function (radius) {
-      this.onCircle.map((s) => {
-        s.draw();
-        for (let i = 0; i < this.inCircle.length; i++) {
-          if (
-            Math.sqrt(
-              (this.inCircle[i].x - s.x) ** 2 + (this.inCircle[i].y - s.y) ** 2
-            ) < radius
-          ) {
-            ctx.beginPath();
-            ctx.strokeStyle = "#ff5500";
-            ctx.moveTo(s.x, s.y);
-            ctx.lineTo(this.inCircle[i].x, this.inCircle[i].y);
-            ctx.stroke();
-          }
-        }
-      });
-
-      this.inCircle.map((s) => {
-        for (let i = 0; i < this.inCircle.length; i++) {
-          if (
-            Math.sqrt(
-              (this.inCircle[i].x - s.x) ** 2 + (this.inCircle[i].y - s.y) ** 2
-            ) < radius
-          ) {
-            ctx.beginPath();
-            ctx.strokeStyle = "#ff5500";
-            ctx.moveTo(s.x, s.y);
-            ctx.lineTo(this.inCircle[i].x, this.inCircle[i].y);
-            ctx.stroke();
-          }
-        }
-      });
-    };
-
-    this.update = () => {
-      this.inCircle.map((s) => {
-        if (
-          Math.sqrt((this.x - s.x) ** 2 + (this.y - s.y) ** 2) >
-          this.radius - s.radius
-        ) {
-          s.dx = -s.dx;
-          s.dy = -s.dy;
-        }
-
-        s.x += s.dx;
-        s.y += s.dy;
-
-        s.draw();
-      });
-
-      //   this.drawAll();
-      this.drawWithinRadius(120);
-    };
+      }
+    });
   }
 
-  const c1 = new Clusters(64, 400);
-  //   setInterval(c1.update, 50);
-
-  function animate() {
-    requestAnimationFrame(animate);
-    ctx.clearRect(0, 0, innerWidth, innerHeight);
-    c1.update();
-  }
-
-  animate();
+  // const size = (canvas.height * canvas.width) / 9000;
+  // const radius = (canvas.height + canvas.width) / 20;
+  // console.log(size, radius);
+  main(180, 150);
 };

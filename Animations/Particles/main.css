@@ -10,5 +10,9 @@
 }
 
 #canvas {
-  /* background: #202020; */
+  position: absolute;
+  top: 0;
+  left: 0;
+  /* background: radial-gradient(rgb(255, 195, 140), rgb(255, 155, 64)); */
+  background: #202020;
 }
