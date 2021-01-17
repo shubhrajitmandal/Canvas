@@ -1,0 +1,12 @@
+* {
+  padding: 0;
+  margin: 0;
+}
+
+.container {
+  background: #242424;
+}
+
+#canvas {
+  display: block;
+}
